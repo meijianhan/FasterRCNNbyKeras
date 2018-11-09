@@ -11,7 +11,7 @@ The implementation is aiming to build the Keras interface based on a Tensorflow 
 ## Testing Results and Some Notes ##
  - ##### Pascal VOC07
 
-   Trained only using Pascal VOC07 training set and tested on VOC07 testing set, after 7 epochs, the mAP is around 66% (+-1). The only data pre-processing is the left-right flipping of each image. The convolution feature from a VGG16 is used as the shared convolution feature.
+   Trained only using Pascal VOC07 training set and tested on VOC07 testing set, after 7 epochs, the mAP is around 68% (+-1). The only data pre-processing is the left-right flipping of each image. The convolution feature from a VGG16 is used as the shared convolution feature.
 
    Tips: during training, the Adam optimizer is used. The lr is set as 1e-5, which influences the final result a lot. However, in [1], the SGD with a lr of 1e-3 is used. And I cannot get a convergence result by using the same setting. I have not figured out the reason why the two lr are different so much.
 
