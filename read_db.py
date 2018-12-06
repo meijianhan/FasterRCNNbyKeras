@@ -119,7 +119,7 @@ def read_db(imdb_names):
         for r in roidbs[1:]:
             roidb.extend(r)
         tmp = get_imdb(imdb_names.split('+')[1])
-        imdb = datasets.imdb.imdb(imdb_names, tmp.classes)
+        imdb = data_gen.imdb.imdb(imdb_names, tmp.classes)
     else:
         imdb = get_imdb(imdb_names)
     return imdb, roidb
