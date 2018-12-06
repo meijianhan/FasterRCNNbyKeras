@@ -30,10 +30,41 @@ from read_db import read_db
 from utils.bbox_transform import clip_boxes, bbox_transform_inv
 from utils.nms_wrapper import nms
 
-
+# set GPU ID
 import os
+import sys
+import argparse
+import datetime
+
+def parse_args():
+    """
+    Parse input arguments
+    """
+    
+    parser = argparse.ArgumentParser(description='Train a Faster R-CNN network')
+    parser.add_argument('--gpu', dest='gpu_id',
+                        help='gpu id: 0, 1, ...',
+                        default='0', type=str)
+    parser.add_argument('--datasets', dest='datasets',
+                        help='voc, voc0712, coco2014',
+                        default='voc', type=str)
+    parser.add_argument('--net', dest='net',
+                        help='vgg16, res50, res101, res152, mobile',
+                        default='vgg16', type=str)
+ 
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
+    args = parser.parse_args()
+    return args
+
+args = parse_args()
+print ("GPU ID: "+args.gpu_id)
+# --------------------Set GPU ID ----------------------
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
+# --------------------End  ----------------------------
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
@@ -78,27 +109,121 @@ def filter_roidb(roidb):
     return filtered_roidb
 
 
+
+
+def select_datasets(String args):
+    """
+    Extract input arguments
+    """
+    datasets_args = {'imdb_name': 'voc_2007_trainval',
+                    'imdbval_name': 'voc_2007_test',
+                    'anchors': '[8,16,32]',
+                    'ratios': '[0.5,1,2]',
+                    'stepsize': '[50000]',
+                    'max_iters': 70000}
+
+    # args #2 Datasets
+    if(args ==  'voc'):   
+        datasets_args['imdb_name'] = 'voc_2007_trainval'
+        datasets_args['imdbval_name'] = 'voc_2007_test'
+        datasets_args['anchors'] = '[8,16,32]'
+        datasets_args['ratios'] = '[0.5,1,2]'
+        datasets_args['stepsize'] = '[50000]'
+        datasets_args['max_iters'] = 70000
+    elif(args ==  'voc0712'): 
+        datasets_args['imdb_name'] = 'voc_2007_trainval+voc_2012_trainval'
+        datasets_args['imdbval_name'] = 'voc_2007_test'
+        datasets_args['anchors'] = '[8,16,32]'
+        datasets_args['ratios'] = '[0.5,1,2]'
+        datasets_args['stepsize'] = '[80000]'
+        datasets_args['max_iters'] = 110000
+
+    elif(args ==  'coco2014'): 
+        datasets_args['imdb_name'] = 'coco_2014_train+coco_2014_valminusminival'
+        datasets_args['imdbval_name'] = 'coco_2014_minival'
+        datasets_args['anchors'] = '[4,8,16,32]'
+        datasets_args['ratios'] = '[0.5,1,2]'
+        datasets_args['stepsize'] = '[350000]'
+        datasets_args['max_iters'] = 490000
+
+    else:
+        print('No dataset given')
+        sys.exit(1)
+
+    return datasets_args
+
+def select_net(args):
+
+    if(args == 'vgg16'):
+        net = './vgg16.yml'
+    #elif(args == 'res50'):
+    #    net = './network/res50.yml'
+    #elif(args == 'res101'):
+    #    net = './network/res101.yml'
+    #elif(args == 'res152'):
+    #    net = './network/res152.yml'
+    #elif(args == 'mobile'):
+    #    net = './network/mobile.yml'
+    else: 
+        print('No net given')
+        sys.exit(1)
+    return net
+
+def load_net_weights(args):
+
+    if(args == 'vgg16'):
+        net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    #elif(args == 'res50'):
+    #    net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    #elif(args == 'res101'):
+    #    net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    #elif(args == 'res152'):
+    #    net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    #elif(args == 'mobile'):
+    #    net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    else: 
+        print ('The net_weights\' file is not exit!')
+        sys.exit(1)
+    return net_address
+
+def load_network(args):
+
+    # load network
+    if args == 'vgg16':
+        net = vgg16()
+    #elif args == 'res50':
+    #    net = vgg16()
+    #elif args == 'res101':
+    #    net = vgg16()
+    #elif args == 'res152':
+    #    net = vgg16()
+    #elif args == 'mobile':
+    #    net = vgg16()
+    else:
+        raise NotImplementedError
+
+    return net
+
 def main():
-
+    
     # --------------------build the data-------------------
-    # Parameters
-    args = {'imdb_name': 'voc_2007_trainval',
-            'imdbval_name': 'voc_2007_test'}
+    datasets_args = select_datasets(args.datasets)
+    print('Datasets Args: ')
+    print(datasets_args)
 
-    cfg_from_file('./vgg16.yml')
-    cfg_from_list(['ANCHOR_SCALES', '[8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'TRAIN.STEPSIZE', '[50000]'])
-
+    cfg_from_file(net_args)
+    cfg_from_list(['ANCHOR_SCALES', datasets_args['anchors'], 'ANCHOR_RATIOS',datasets_args['ratios'], 'TRAIN.STEPSIZE', datasets_args['stepsize']])
     np.random.seed(cfg.RNG_SEED)
 
     #cfg.TRAIN.USE_FLIPPED = False
     # train set
-    imdb, roidb = read_db(args['imdb_name'])
+    imdb, roidb = read_db(datasets_args['imdb_name'])
     print('{:d} roidb entries'.format(len(roidb)))
 
     # also add the validation set, but with no flipping images
     orgflip = cfg.TRAIN.USE_FLIPPED
     cfg.TRAIN.USE_FLIPPED = False
-    _, valroidb = read_db(args['imdbval_name'])
+    _, valroidb = read_db(datasets_args['imdbval_name'])
     print('{:d} validation roidb entries'.format(len(valroidb)))
     cfg.TRAIN.USE_FLIPPED = orgflip
 
@@ -122,9 +247,12 @@ def main():
 
     # convolution feature
     conv_feat_channel = 512
-    model_feat_conv = VGG16()
+    model_feat_conv = load_network(args.net)
     model_feat_conv.conv_feature(input_shape, conv_feat_channel)
-    model_feat_conv.load_weight('../vgg16_weights_tf_dim_ordering_tf_kernels.h5')
+
+
+    model_feat_conv.load_weight(load_net_weights(args.net))
+
     feat_conv = model_feat_conv.model_seq(image_input)
     # testing model
     feat_conv_test = model_feat_conv.model_seq(image_input_test)
@@ -166,7 +294,7 @@ def main():
     # RegNet
     model_reg = RegNet()
     model_reg.reg_net((cfg.POOLING_SIZE, cfg.POOLING_SIZE, conv_feat_channel), num_classes)
-    model_reg.load_weight('../vgg16_weights_tf_dim_ordering_tf_kernels.h5')
+    model_reg.load_weight(load_net_weights(args.net))
     cls_score, cls_prob, bbox_pred = model_reg.model_seq(pool5)
     # testing model
     cls_score_test, cls_prob_test, bbox_pred_test = model_reg.model_seq(pool5_test)
@@ -254,7 +382,7 @@ def main():
 
     # Build the threads
     thread_data_gen = Process(target=data_gen_thread_fun, \
-                              args=(data_train_gen, lock_sync_data_gen, parent_conn_data_gen, ))
+                              args_datasets=(data_train_gen, lock_sync_data_gen, parent_conn_data_gen, ))
     thread_data_gen.start()
 
     print("Started all the threads!")
@@ -307,8 +435,8 @@ def main():
 
 
         if((i_epoch + 1)%5 == 0):
-            model_train.save_weights('../model_save/model_train_' + str(i_epoch + 1) + '.h5')
-            model_test.save_weights('../model_save/model_test_' + str(i_epoch + 1) + '.h5')
+            model_train.save_weights('./model_save/model_train_' + args.net + str(i_epoch + 1) + datetime.now().strftime("%Y%m%d") + '.h5')
+            model_test.save_weights('./model_save/model_test_' + args.net + str(i_epoch + 1) + datetime.now().strftime("%Y%m%d") + '.h5')
 
         # change the lr. Seem to be useless
         if((i_epoch + 1)%10 == 0):
@@ -317,8 +445,8 @@ def main():
             model_train.optimizer.lr = (lr_old*lr_ratio)
 
         
-        model_train.save_weights('../model_save/model_train.h5')
-        model_test.save_weights('../model_save/model_test.h5')
+        model_train.save_weights('./model_save/model_train' + args.datasets + '.h5')
+        model_test.save_weights('./model_save/model_test' + args.datasets + '.h5')
         # ----------------------val---------------------------
         if(do_val):
             progbar_val = generic_utils.Progbar(val_length)

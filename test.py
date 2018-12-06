@@ -27,9 +27,41 @@ from utils.bbox_transform import clip_boxes, bbox_transform_inv
 from utils.nms_wrapper import nms
 
 
+# set GPU ID
 import os
+import sys
+import argparse
+import datetime
+
+def parse_args():
+    """
+    Parse input arguments
+    """
+    
+    parser = argparse.ArgumentParser(description='Train a Faster R-CNN network')
+    parser.add_argument('--gpu', dest='gpu_id',
+                        help='gpu id: 0, 1, ...',
+                        default='0', type=str)
+    parser.add_argument('--datasets', dest='datasets',
+                        help='voc, voc0712, coco2014',
+                        default='voc', type=str)
+    parser.add_argument('--net', dest='net',
+                        help='vgg16, res50, res101, res152, mobile',
+                        default='vgg16', type=str)
+ 
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
+    args = parser.parse_args()
+    return args
+
+args = parse_args()
+print ("GPU ID: "+args.gpu_id)
+# --------------------Set GPU ID ----------------------
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
+# --------------------End  ----------------------------
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
@@ -58,6 +90,99 @@ def _clip_boxes(boxes, im_shape):
   boxes[:, 3::4] = np.minimum(boxes[:, 3::4], im_shape[0] - 1)
   return boxes
 
+def select_datasets(String args):
+    """
+    Extract input arguments
+    """
+    datasets_args = {'imdb_name': 'voc_2007_trainval',
+                    'imdbval_name': 'voc_2007_test',
+                    'anchors': '[8,16,32]',
+                    'ratios': '[0.5,1,2]',
+                    'stepsize': '[50000]',
+                    'max_iters': 70000}
+
+    # args #2 Datasets
+    if(args ==  'voc'):   
+        datasets_args['imdb_name'] = 'voc_2007_trainval'
+        datasets_args['imdbval_name'] = 'voc_2007_test'
+        datasets_args['anchors'] = '[8,16,32]'
+        datasets_args['ratios'] = '[0.5,1,2]'
+        datasets_args['stepsize'] = '[50000]'
+        datasets_args['max_iters'] = 70000
+    elif(args ==  'voc0712'): 
+        datasets_args['imdb_name'] = 'voc_2007_trainval+voc_2012_trainval'
+        datasets_args['imdbval_name'] = 'voc_2007_test'
+        datasets_args['anchors'] = '[8,16,32]'
+        datasets_args['ratios'] = '[0.5,1,2]'
+        datasets_args['stepsize'] = '[80000]'
+        datasets_args['max_iters'] = 110000
+
+    elif(args ==  'coco2014'): 
+        datasets_args['imdb_name'] = 'coco_2014_train+coco_2014_valminusminival'
+        datasets_args['imdbval_name'] = 'coco_2014_minival'
+        datasets_args['anchors'] = '[4,8,16,32]'
+        datasets_args['ratios'] = '[0.5,1,2]'
+        datasets_args['stepsize'] = '[350000]'
+        datasets_args['max_iters'] = 490000
+
+    else:
+        print('No dataset given')
+        sys.exit(1)
+
+    return datasets_args
+
+def select_net(args):
+
+    if(args == 'vgg16'):
+        net = './network/vgg16.yml'
+    elif(args == 'res50'):
+        net = './network/res50.yml'
+    elif(args == 'res101'):
+        net = './network/res101.yml'
+    elif(args == 'res152'):
+        net = './network/res152.yml'
+    elif(args == 'mobile'):
+        net = './network/mobile.yml'
+    else: 
+        print('No net given')
+        sys.exit(1)
+    return net
+
+def load_net_weights(args):
+
+    if(args == 'vgg16'):
+        net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    elif(args == 'res50'):
+        net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    elif(args == 'res101'):
+        net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    elif(args == 'res152'):
+        net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    elif(args == 'mobile'):
+        net_address = './network/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+    else: 
+        print ('The net_weights\' file is not exit!')
+        sys.exit(1)
+    return net_address
+
+def load_network(args):
+
+    # load network
+    if args == 'vgg16':
+        net = vgg16()
+    #elif args == 'res50':
+    #    net = vgg16()
+    #elif args == 'res101':
+    #    net = vgg16()
+    #elif args == 'res152':
+    #    net = vgg16()
+    #elif args == 'mobile':
+    #    net = vgg16()
+    else:
+        raise NotImplementedError
+
+    return net
+
 def main():
 
     #verbose = True
@@ -71,13 +196,12 @@ def main():
                  'sheep', 'sofa', 'train', 'tvmonitor')
 
     # --------------------build the data-------------------
-    # Parameters
-    args = {'imdb_name': 'voc_2007_trainval',
-            'imdbval_name': 'voc_2007_test'}
+    datasets_args = select_datasets(args.datasets)
+    print('Datasets Args: ')
+    print(datasets_args)
 
-    cfg_from_file('./vgg16.yml')
-    cfg_from_list(['ANCHOR_SCALES', '[8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'TRAIN.STEPSIZE', '[50000]'])
-
+    cfg_from_file(select_net(args.net))
+    cfg_from_list(['ANCHOR_SCALES', datasets_args['anchors'], 'ANCHOR_RATIOS',datasets_args['ratios'], 'TRAIN.STEPSIZE', datasets_args['stepsize']])
     np.random.seed(cfg.RNG_SEED)
 
 
@@ -85,7 +209,7 @@ def main():
     orgflip = cfg.TRAIN.USE_FLIPPED
     cfg.TRAIN.USE_FLIPPED = False
     
-    imdb, valroidb = read_db(args['imdbval_name'])
+    imdb, valroidb = read_db(datasets_args['imdbval_name'])
     print('{:d} validation roidb entries'.format(len(valroidb)))
 
     cfg.TRAIN.USE_FLIPPED = orgflip
@@ -107,7 +231,10 @@ def main():
 
     # convolution feature
     conv_feat_channel = 512
-    model_feat_conv = VGG16()
+    
+
+    model_feat_conv = load_network(args.net)
+    
     model_feat_conv.conv_feature(input_shape, conv_feat_channel)
     # testing model
     feat_conv_test = model_feat_conv.model_seq(image_input_test)
@@ -149,7 +276,7 @@ def main():
     # build the testing model
     model_test = Model(inputs=[image_input_test, im_info_input_test], \
                        outputs=[rois_test, cls_score_test, cls_prob_test, bbox_pred_test])
-    model_test.load_weights('../model_save/model_test.h5', by_name=True)
+    model_test.load_weights('./model_save/model_train' + args.datasets + '.h5', by_name=True)
     # --------------------build the model-------------------
 
 
@@ -162,7 +289,7 @@ def main():
     # --------------------start testing-------------------
     all_boxes = [[[] for _ in range(len(imdb.image_index))]
                  for _ in range(imdb.num_classes)]
-    output_dir = '../test_save/'
+    output_dir = './test_save/'
     epoch_length = len(valroidb)
     thresh = 0.
     max_per_image = 100
