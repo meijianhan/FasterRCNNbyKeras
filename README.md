@@ -9,11 +9,34 @@ The implementation is aiming to build the Keras interface based on a Tensorflow 
 
 
 ## Testing Results and Some Notes ##
- - ##### Pascal VOC07
+ - ##### Pascal VOC 2007
 
-   Trained only using Pascal VOC07 training set and tested on VOC07 testing set, after 7 epochs, the mAP is around 68% (+-1). The only data pre-processing is the left-right flipping of each image. The convolution feature from a VGG16 is used as the shared convolution feature.
+model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP
+---------|--------|-----|--------|-----|--------|-----
+VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 66.0
+
+  
+
+  - ##### Pascal VOC 2007 + 2012
+
+model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP
+---------|--------|-----|--------|-----|--------|-----
+VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 72.2
+
+
+
+
+  - ##### COCO 2014
+
+model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP
+---------|--------|-----|--------|-----|--------|-----
+VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 31.2
+
+
+<!---   Trained only using Pascal VOC07 training set and tested on VOC07 testing set, after 7 epochs, the mAP is around 68% (+-1). The only data pre-processing is the left-right flipping of each image. The convolution feature from a VGG16 is used as the shared convolution feature.
 
    Tips: during training, the Adam optimizer is used. The lr is set as 1e-5, which influences the final result a lot. However, in [1], the SGD with a lr of 1e-3 is used. And I cannot get a convergence result by using the same setting. I have not figured out the reason why the two lr are different so much.
+--->
 
 ## Required Environment ##
 
@@ -43,22 +66,41 @@ The implementation is aiming to build the Keras interface based on a Tensorflow 
 
 - ##### Training
 
-  Build the model weight saving folder "../model_save"
+  Build the model weight saving folder "../output/[NET]/"
+
+  Download pre-trained models and weights:
+  ```
+  mkdir net_weights
+  wget https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5
+  cd ..
+
+  ```
 
   Run the following script:
 
   ```
-  python train.py
+  ./scripts/train_faster_rcnn.sh [GPU_ID] [DATASET] [NET]
+  # GPU_ID is the GPU you want to test on
+  # NET in {vgg16} is the network arch to use,
+  # DATASET {pascal_voc, pascal_voc_0712, coco} is defined in train_faster_rcnn.sh
+  # Examples:
+  ./scripts/train_faster_rcnn.sh 0 pascal_voc vgg16
   ```
 
 - ##### Testing
 
-  Build the test output saving folder "../test_save"
+  Build the test output saving folder "../output/[NET]/"
 
   Run the following script:
 
   ```
-  python test.py
+  ./scripts/test_faster_rcnn.sh [GPU_ID] [DATASET] [NET]
+  # GPU_ID is the GPU you want to test on
+  # NET in {vgg16} is the network arch to use,
+  # DATASET {pascal_voc, pascal_voc_0712, coco} is defined in train_faster_rcnn.sh
+  # Examples:
+  ./scripts/test_faster_rcnn.sh 0 pascal_voc vgg16
+
   ```
 
 

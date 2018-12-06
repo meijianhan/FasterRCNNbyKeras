@@ -12,12 +12,14 @@ from __future__ import print_function
 
 __sets = {}
 import PIL
-from data_gen.pascal_voc import pascal_voc
+from datasets.pascal_voc import pascal_voc
 import numpy as np
 from config import cfg
 
-import data_gen.imdb
-from data_gen.coco import coco
+import datasets.imdb
+from datasets.coco import coco
+
+
 
 
 # Set up voc_<year>_<split> 

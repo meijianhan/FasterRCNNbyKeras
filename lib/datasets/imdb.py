@@ -16,6 +16,9 @@ import numpy as np
 import scipy.sparse
 from config import cfg
 
+from datasets.pascal_voc import pascal_voc
+from datasets.coco import coco
+
 
 class imdb(object):
   """Image database."""

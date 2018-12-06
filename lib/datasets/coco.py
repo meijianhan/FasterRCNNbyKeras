@@ -8,8 +8,8 @@ from __future__ import division
 from __future__ import print_function
 
 from .imdb import imdb
-import data_gen.ds_utils as ds_utils
-from model.config import cfg
+import datasets.ds_utils as ds_utils
+from config import cfg
 import os.path as osp
 import sys
 import os
