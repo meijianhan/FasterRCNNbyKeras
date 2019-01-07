@@ -1,17 +1,19 @@
 # keras_frcnn
 
-This repo is an implementation of faster r-cnn using Keras and Tensorflow. The Tensorflow part borrows the ref: https://github.com/endernewton/tf-faster-rcnn a lot.
+This repo is an implementation of Faster R-CNN integrating both Keras and Tensorflow. We use a lot of [endernewton](https://github.com/endernewton)‘s tensorflow code, and the reference is that:
+
+[An Implementation of Faster RCNN with Study for Region Sampling]: https://github.com/endernewton/tf-faster-rcnn
 
 
 ## Introduction ##
 
-The implementation is aiming to build the Keras interface based on a Tensorflow FRCNN code [1]. Most of the tf functions are packed by using Keras Lambda. And the structure of the code is changed.
+Our implementation is aiming to build the Keras interface based on a Tensorflow Faster R-CNN code [1]. Most of the tensorflow functions are packed by using Keras Lambda function. We reconstruct the code based on the above goals.
 
 
-## Testing Results and Some Notes ##
+## Benchmark ##
  - ##### Pascal VOC 2007
 
-model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP
+model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP (%) 
 ---------|--------|-----|--------|-----|--------|-----
 VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 66.0
 
@@ -19,7 +21,7 @@ VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 66.0
 
   - ##### Pascal VOC 2007 + 2012
 
-model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP
+model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP (%) 
 ---------|--------|-----|--------|-----|--------|-----
 VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 72.2
 
@@ -28,7 +30,7 @@ VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 72.2
 
   - ##### COCO 2014
 
-model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP
+model     | #GPUs | batch size |lr        | max_epoch     | mem/GPU | mAP (%) 
 ---------|--------|-----|--------|-----|--------|-----
 VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 31.2
 
@@ -51,7 +53,7 @@ VGG-16     | 1 | 1    |1e-5| 7  | 8817 MB  | 31.2
  - Optional: if you need GPUs acceleration, please install [CUDA](https://developer.nvidia.com/cuda-toolkit) that the version requires >= 9.0
 
 
-## Training and Testing ##
+## Tutorial ##
 - ##### Data preparation and setup
 
   Follow the ref: https://github.com/rbgirshick/py-faster-rcnn#beyond-the-demo-installation-for-training-and-testing-models. Download Pascal VOC 07 dataset and build soft link in folder ./data/, then name the link as "VOCdevkit2007"
