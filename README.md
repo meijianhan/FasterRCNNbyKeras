@@ -1,6 +1,6 @@
 # keras_frcnn
 
-This repo is an implementation of Faster R-CNN integrating both Keras and Tensorflow. We use a lot of [endernewton](https://github.com/endernewton)‘s tensorflow code, and the reference is that: https://github.com/endernewton/tf-faster-rcnn
+This repo is an implementation of [Faster R-CNN](https://arxiv.org/abs/1506.01497) integrating both Keras and Tensorflow. We use a lot of [endernewton](https://github.com/endernewton)‘s tensorflow code, and the reference is that: https://github.com/endernewton/tf-faster-rcnn
 
 
 ## Introduction ##
